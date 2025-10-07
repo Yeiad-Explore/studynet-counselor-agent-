@@ -15,7 +15,7 @@ from django.utils.decorators import method_decorator
 from django.db.models import Count, Avg, Sum, Q
 from rest_framework import status, serializers
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
@@ -147,7 +147,7 @@ class HealthCheckView(APIView):
 
 class QueryProcessView(APIView):
     """Process a user query through the RAG pipeline"""
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser]
 
     def post(self, request):
@@ -298,7 +298,7 @@ class QueryProcessView(APIView):
 
 class DocumentUploadView(APIView):
     """Upload and process a document"""
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
@@ -378,7 +378,7 @@ class DocumentUploadView(APIView):
 
 class TextUploadView(APIView):
     """Upload raw text content"""
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser]
 
     def post(self, request):
@@ -417,7 +417,7 @@ class TextUploadView(APIView):
 
 class CSVUploadView(APIView):
     """Upload CSV files and make them queryable via SQL"""
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
@@ -517,7 +517,7 @@ class CSVUploadView(APIView):
 
 class MemoryView(APIView):
     """Get conversation memory for a session"""
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, session_id):
         try:
@@ -554,7 +554,7 @@ class MemoryView(APIView):
 
 class SessionsListView(APIView):
     """List all active sessions"""
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
@@ -577,7 +577,7 @@ class SessionsListView(APIView):
 
 class MetricsView(APIView):
     """Get system metrics"""
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
@@ -608,7 +608,7 @@ class MetricsView(APIView):
 
 class KnowledgeBaseStatusView(APIView):
     """Get knowledge base status and statistics"""
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
@@ -634,7 +634,7 @@ class KnowledgeBaseStatusView(APIView):
 
 class KnowledgeBaseReloadView(APIView):
     """Reload knowledge base from PDFs folder"""
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         try:
@@ -670,7 +670,7 @@ class KnowledgeBaseReloadView(APIView):
 
 class VectorStoreClearView(APIView):
     """Clear the entire vector store (use with caution)"""
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def delete(self, request):
         try:
@@ -693,7 +693,7 @@ class VectorStoreClearView(APIView):
 
 class AnalyticsQueryStatsView(APIView):
     """Get query analytics and statistics"""
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
@@ -744,7 +744,7 @@ class AnalyticsQueryStatsView(APIView):
 
 class AnalyticsSourceStatsView(APIView):
     """Get data source statistics"""
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
@@ -781,7 +781,7 @@ class AnalyticsSourceStatsView(APIView):
 
 class SystemReportView(APIView):
     """Generate system health report"""
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
@@ -846,7 +846,7 @@ class SystemReportView(APIView):
 
 class UsageReportView(APIView):
     """Generate usage report"""
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
@@ -914,7 +914,7 @@ class UsageReportView(APIView):
 
 class SQLExportView(APIView):
     """Export SQL query results to CSV or JSON"""
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser]
 
     def post(self, request):
@@ -975,7 +975,7 @@ class SQLExportView(APIView):
 
 class TokenUsageView(APIView):
     """Get detailed token usage and cost statistics"""
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         """Get token usage statistics
@@ -1038,7 +1038,7 @@ class TokenUsageView(APIView):
 
 class DeveloperDashboardView(APIView):
     """Comprehensive developer dashboard with all metrics"""
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         """Get comprehensive dashboard data
@@ -1137,7 +1137,7 @@ class DeveloperDashboardView(APIView):
 
 class QueryCostBreakdownView(APIView):
     """Get cost breakdown for individual queries"""
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         """Get detailed cost breakdown per query

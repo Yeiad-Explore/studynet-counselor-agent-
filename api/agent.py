@@ -28,13 +28,20 @@ class RAGAgent:
         
         self.retriever = retriever
         self.memory_manager = memory_manager
-        
-        # Initialize Tavily web search
-        self.web_search = TavilySearchResults(
-            api_key=config.TAVILY_API_KEY,
-            max_results=3,
-            search_depth="advanced"
-        )
+
+        # Initialize Tavily web search (optional)
+        self.web_search_available = False
+        try:
+            if config.TAVILY_API_KEY and config.TAVILY_API_KEY != 'none':
+                self.web_search = TavilySearchResults(
+                    api_key=config.TAVILY_API_KEY,
+                    max_results=3,
+                    search_depth="advanced"
+                )
+                self.web_search_available = True
+        except Exception as e:
+            logger.warning(f"Tavily web search not available: {e}")
+            self.web_search = None
         
         # Create tools
         self.tools = self._create_tools()
@@ -66,6 +73,9 @@ class RAGAgent:
         
         def search_web(query: str) -> str:
             """Search the web for information"""
+            if not self.web_search_available or not self.web_search:
+                return "Web search is not available. Please configure TAVILY_API_KEY in .env file."
+
             try:
                 results = self.web_search.run(query)
                 if isinstance(results, list) and results:
@@ -77,19 +87,26 @@ class RAGAgent:
             except Exception as e:
                 logger.error(f"Web search failed: {e}")
                 return "Web search failed. Please try again."
-        
-        return [
+
+        tools = [
              Tool(
                  name="search_knowledge_base",
                  func=search_knowledge_base,
                  description="Search the internal knowledge base (PDFs folder) for information. Use this FIRST before web search."
-             ),
-             Tool(
-                 name="search_web",
-                 func=search_web,
-                 description="Search the web for current information. Use only if knowledge base (PDFs folder) doesn't have the answer."
              )
          ]
+
+        # Only add web search if available
+        if self.web_search_available:
+            tools.append(
+                Tool(
+                    name="search_web",
+                    func=search_web,
+                    description="Search the web for current information. Use only if knowledge base (PDFs folder) doesn't have the answer."
+                )
+            )
+
+        return tools
     
     def _create_agent(self) -> AgentExecutor:
         """Create the ReAct agent with enhanced formatting"""

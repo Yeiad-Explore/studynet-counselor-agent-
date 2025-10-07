@@ -7,9 +7,16 @@ class RAGAgent {
     this.recentQueries = JSON.parse(
       localStorage.getItem("recentQueries") || "[]"
     );
+    
+    // Authentication state
+    this.isAuthenticated = false;
+    this.accessToken = localStorage.getItem("accessToken");
+    this.refreshToken = localStorage.getItem("refreshToken");
+    this.user = JSON.parse(localStorage.getItem("user") || "null");
 
     this.initializeElements();
     this.bindEvents();
+    this.initializeAuth();
     this.loadSystemStatus();
     this.updateRecentQueries();
     this.updateSessionDisplay();
@@ -96,6 +103,33 @@ class RAGAgent {
       connectionStatus: document.getElementById("connectionStatus"),
       lastRequest: document.getElementById("lastRequest"),
       errorCount: document.getElementById("errorCount"),
+      // Authentication elements
+      authModal: document.getElementById("authModal"),
+      loginForm: document.getElementById("loginForm"),
+      registerForm: document.getElementById("registerForm"),
+      loginFormElement: document.getElementById("loginFormElement"),
+      registerFormElement: document.getElementById("registerFormElement"),
+      showRegister: document.getElementById("showRegister"),
+      showLogin: document.getElementById("showLogin"),
+      loginBtn: document.getElementById("loginBtn"),
+      profileBtn: document.getElementById("profileBtn"),
+      authControls: document.getElementById("authControls"),
+      loginControls: document.getElementById("loginControls"),
+      userDisplayName: document.getElementById("userDisplayName"),
+      profileModal: document.getElementById("profileModal"),
+      closeProfileModal: document.getElementById("closeProfileModal"),
+      profileUsername: document.getElementById("profileUsername"),
+      profileEmail: document.getElementById("profileEmail"),
+      profileName: document.getElementById("profileName"),
+      editProfileBtn: document.getElementById("editProfileBtn"),
+      changePasswordBtn: document.getElementById("changePasswordBtn"),
+      logoutBtn: document.getElementById("logoutBtn"),
+      editProfileModal: document.getElementById("editProfileModal"),
+      closeEditProfileModal: document.getElementById("closeEditProfileModal"),
+      editProfileForm: document.getElementById("editProfileForm"),
+      changePasswordModal: document.getElementById("changePasswordModal"),
+      closeChangePasswordModal: document.getElementById("closeChangePasswordModal"),
+      changePasswordForm: document.getElementById("changePasswordForm"),
     };
 
     // Initialize developer mode state
@@ -234,6 +268,62 @@ class RAGAgent {
     this.elements.processQuery?.addEventListener("click", () =>
       this.processTestQuery()
     );
+
+    // Authentication event bindings
+    this.elements.loginBtn?.addEventListener("click", () => this.showAuthModal());
+    this.elements.profileBtn?.addEventListener("click", () => this.showProfileModal());
+    this.elements.showRegister?.addEventListener("click", (e) => {
+      e.preventDefault();
+      this.showRegisterForm();
+    });
+    this.elements.showLogin?.addEventListener("click", (e) => {
+      e.preventDefault();
+      this.showLoginForm();
+    });
+    this.elements.loginFormElement?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      this.handleLogin();
+    });
+    this.elements.registerFormElement?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      this.handleRegister();
+    });
+    this.elements.closeProfileModal?.addEventListener("click", () => this.hideProfileModal());
+    this.elements.editProfileBtn?.addEventListener("click", () => this.showEditProfileModal());
+    this.elements.changePasswordBtn?.addEventListener("click", () => this.showChangePasswordModal());
+    this.elements.logoutBtn?.addEventListener("click", () => this.handleLogout());
+    this.elements.closeEditProfileModal?.addEventListener("click", () => this.hideEditProfileModal());
+    this.elements.closeChangePasswordModal?.addEventListener("click", () => this.hideChangePasswordModal());
+    this.elements.editProfileForm?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      this.handleEditProfile();
+    });
+    this.elements.changePasswordForm?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      this.handleChangePassword();
+    });
+
+    // Close modals on outside click
+    this.elements.authModal?.addEventListener("click", (e) => {
+      if (e.target === this.elements.authModal) {
+        this.hideAuthModal();
+      }
+    });
+    this.elements.profileModal?.addEventListener("click", (e) => {
+      if (e.target === this.elements.profileModal) {
+        this.hideProfileModal();
+      }
+    });
+    this.elements.editProfileModal?.addEventListener("click", (e) => {
+      if (e.target === this.elements.editProfileModal) {
+        this.hideEditProfileModal();
+      }
+    });
+    this.elements.changePasswordModal?.addEventListener("click", (e) => {
+      if (e.target === this.elements.changePasswordModal) {
+        this.hideChangePasswordModal();
+      }
+    });
   }
 
   generateSessionId() {
@@ -759,12 +849,34 @@ class RAGAgent {
       };
     }
 
+    // Add authentication header if available
+    if (this.accessToken) {
+      defaultOptions.headers = {
+        ...defaultOptions.headers,
+        "Authorization": `Bearer ${this.accessToken}`
+      };
+    }
+
     // Update debug info
     this.lastRequestTime = new Date().toLocaleTimeString();
     this.updateDebugInfo();
 
     try {
       const response = await fetch(url, { ...defaultOptions, ...options });
+      
+      // Handle 401 Unauthorized - token might be expired
+      if (response.status === 401 && this.refreshToken) {
+        const refreshed = await this.refreshAccessToken();
+        if (refreshed) {
+          // Retry the request with new token
+          defaultOptions.headers.Authorization = `Bearer ${this.accessToken}`;
+          return await fetch(url, { ...defaultOptions, ...options });
+        } else {
+          // Refresh failed, redirect to login
+          this.handleLogout();
+        }
+      }
+      
       return response;
     } catch (error) {
       this.errorCount++;
@@ -1471,6 +1583,302 @@ class RAGAgent {
       this.elements.apiTestOutput.textContent = `Error: ${error.message}`;
       this.showNotification("API test failed", "error");
     }
+  }
+
+  // ============================================================================
+  // Authentication Methods
+  // ============================================================================
+
+  initializeAuth() {
+    // Check if user is already authenticated
+    if (this.accessToken && this.user) {
+      this.isAuthenticated = true;
+      this.updateAuthUI();
+      this.loadUserProfile();
+    } else {
+      this.isAuthenticated = false;
+      this.updateAuthUI();
+    }
+  }
+
+  updateAuthUI() {
+    if (this.isAuthenticated) {
+      this.elements.authControls.style.display = "block";
+      this.elements.loginControls.style.display = "none";
+      this.elements.userDisplayName.textContent = this.user?.first_name || this.user?.username || "User";
+    } else {
+      this.elements.authControls.style.display = "none";
+      this.elements.loginControls.style.display = "block";
+    }
+  }
+
+  showAuthModal() {
+    this.elements.authModal.style.display = "block";
+    this.showLoginForm();
+  }
+
+  hideAuthModal() {
+    this.elements.authModal.style.display = "none";
+  }
+
+  showLoginForm() {
+    this.elements.loginForm.classList.add("active");
+    this.elements.registerForm.classList.remove("active");
+  }
+
+  showRegisterForm() {
+    this.elements.registerForm.classList.add("active");
+    this.elements.loginForm.classList.remove("active");
+  }
+
+  async handleLogin() {
+    const username = this.elements.loginFormElement.querySelector("#loginUsername").value;
+    const password = this.elements.loginFormElement.querySelector("#loginPassword").value;
+
+    if (!username || !password) {
+      this.showNotification("Please fill in all fields", "error");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${this.apiBase}/auth/login/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        this.setAuthData(data.user, data.tokens);
+        this.hideAuthModal();
+        this.showNotification("Login successful!", "success");
+        this.loadUserProfile();
+      } else {
+        const error = await response.json();
+        this.showNotification(error.error || "Login failed", "error");
+      }
+    } catch (error) {
+      this.showNotification("Login failed: " + error.message, "error");
+    }
+  }
+
+  async handleRegister() {
+    const formData = new FormData(this.elements.registerFormElement);
+    const data = Object.fromEntries(formData.entries());
+
+    if (!data.username || !data.email || !data.password || !data.password_confirm) {
+      this.showNotification("Please fill in all required fields", "error");
+      return;
+    }
+
+    if (data.password !== data.password_confirm) {
+      this.showNotification("Passwords do not match", "error");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${this.apiBase}/auth/register/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        const responseData = await response.json();
+        this.setAuthData(responseData.user, responseData.tokens);
+        this.hideAuthModal();
+        this.showNotification("Registration successful!", "success");
+        this.loadUserProfile();
+      } else {
+        const error = await response.json();
+        this.showNotification(error.error || "Registration failed", "error");
+      }
+    } catch (error) {
+      this.showNotification("Registration failed: " + error.message, "error");
+    }
+  }
+
+  setAuthData(user, tokens) {
+    this.user = user;
+    this.accessToken = tokens.access;
+    this.refreshToken = tokens.refresh;
+    this.isAuthenticated = true;
+
+    // Store in localStorage
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("accessToken", tokens.access);
+    localStorage.setItem("refreshToken", tokens.refresh);
+
+    this.updateAuthUI();
+  }
+
+  async refreshAccessToken() {
+    if (!this.refreshToken) return false;
+
+    try {
+      const response = await fetch(`${this.apiBase}/auth/token/refresh/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ refresh: this.refreshToken }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        this.accessToken = data.access;
+        localStorage.setItem("accessToken", data.access);
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      console.error("Token refresh failed:", error);
+      return false;
+    }
+  }
+
+  async loadUserProfile() {
+    if (!this.isAuthenticated) return;
+
+    try {
+      const response = await this.makeRequest("/auth/profile/");
+      if (response.ok) {
+        const userData = await response.json();
+        this.user = userData;
+        localStorage.setItem("user", JSON.stringify(userData));
+        this.updateAuthUI();
+      }
+    } catch (error) {
+      console.error("Failed to load user profile:", error);
+    }
+  }
+
+  showProfileModal() {
+    if (this.user) {
+      this.elements.profileUsername.textContent = this.user.username;
+      this.elements.profileEmail.textContent = this.user.email;
+      this.elements.profileName.textContent = `${this.user.first_name || ""} ${this.user.last_name || ""}`.trim() || "No name provided";
+    }
+    this.elements.profileModal.style.display = "block";
+  }
+
+  hideProfileModal() {
+    this.elements.profileModal.style.display = "none";
+  }
+
+  showEditProfileModal() {
+    if (this.user) {
+      document.getElementById("editEmail").value = this.user.email || "";
+      document.getElementById("editFirstName").value = this.user.first_name || "";
+      document.getElementById("editLastName").value = this.user.last_name || "";
+    }
+    this.elements.editProfileModal.style.display = "block";
+    this.hideProfileModal();
+  }
+
+  hideEditProfileModal() {
+    this.elements.editProfileModal.style.display = "none";
+  }
+
+  showChangePasswordModal() {
+    this.elements.changePasswordModal.style.display = "block";
+    this.hideProfileModal();
+  }
+
+  hideChangePasswordModal() {
+    this.elements.changePasswordModal.style.display = "none";
+  }
+
+  async handleEditProfile() {
+    const formData = new FormData(this.elements.editProfileForm);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+      const response = await this.makeRequest("/auth/profile/update/", {
+        method: "PUT",
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        const updatedUser = await response.json();
+        this.user = updatedUser.user;
+        localStorage.setItem("user", JSON.stringify(updatedUser.user));
+        this.updateAuthUI();
+        this.hideEditProfileModal();
+        this.showNotification("Profile updated successfully!", "success");
+      } else {
+        const error = await response.json();
+        this.showNotification(error.error || "Profile update failed", "error");
+      }
+    } catch (error) {
+      this.showNotification("Profile update failed: " + error.message, "error");
+    }
+  }
+
+  async handleChangePassword() {
+    const formData = new FormData(this.elements.changePasswordForm);
+    const data = Object.fromEntries(formData.entries());
+
+    if (data.new_password !== data.new_password_confirm) {
+      this.showNotification("New passwords do not match", "error");
+      return;
+    }
+
+    try {
+      const response = await this.makeRequest("/auth/password/change/", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        this.hideChangePasswordModal();
+        this.showNotification("Password changed successfully!", "success");
+        this.elements.changePasswordForm.reset();
+      } else {
+        const error = await response.json();
+        this.showNotification(error.error || "Password change failed", "error");
+      }
+    } catch (error) {
+      this.showNotification("Password change failed: " + error.message, "error");
+    }
+  }
+
+  async handleLogout() {
+    if (this.refreshToken) {
+      try {
+        await fetch(`${this.apiBase}/auth/logout/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ refresh: this.refreshToken }),
+        });
+      } catch (error) {
+        console.error("Logout request failed:", error);
+      }
+    }
+
+    // Clear authentication data
+    this.isAuthenticated = false;
+    this.user = null;
+    this.accessToken = null;
+    this.refreshToken = null;
+
+    // Clear localStorage
+    localStorage.removeItem("user");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+
+    this.updateAuthUI();
+    this.hideProfileModal();
+    this.hideEditProfileModal();
+    this.hideChangePasswordModal();
+    this.showNotification("Logged out successfully", "info");
   }
 }
 

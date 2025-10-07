@@ -1,6 +1,7 @@
 # URL configuration for RAG backend API
 from django.urls import path
 from . import views
+from . import auth_views
 
 app_name = 'api'
 
@@ -11,6 +12,15 @@ urlpatterns = [
 
     # Health check
     path('health/', views.HealthCheckView.as_view(), name='health_check'),
+
+    # Authentication endpoints
+    path('auth/register/', auth_views.register_view, name='register'),
+    path('auth/login/', auth_views.login_view, name='login'),
+    path('auth/logout/', auth_views.logout_view, name='logout'),
+    path('auth/token/refresh/', auth_views.token_refresh_view, name='token_refresh'),
+    path('auth/profile/', auth_views.user_profile_view, name='user_profile'),
+    path('auth/profile/update/', auth_views.update_profile_view, name='update_profile'),
+    path('auth/password/change/', auth_views.change_password_view, name='change_password'),
 
     # Core query processing
     path('query/', views.QueryProcessView.as_view(), name='query_process'),

@@ -1,20 +1,20 @@
 {
-  "last_updated": "2025-10-06T18:34:30.009919",
+  "last_updated": "2025-10-07T14:26:43.607896",
   "token_usage": {
-    "total_tokens": 16482,
-    "total_prompt_tokens": 664,
-    "total_completion_tokens": 15818,
-    "total_cost_usd": "0.000480",
-    "avg_tokens_per_query": 610.44,
-    "avg_cost_per_query": "0.000018",
-    "queries_count": 27
+    "total_tokens": 17242,
+    "total_prompt_tokens": 692,
+    "total_completion_tokens": 16550,
+    "total_cost_usd": "0.000502",
+    "avg_tokens_per_query": 594.55,
+    "avg_cost_per_query": "0.000017",
+    "queries_count": 29
   },
-  "total_queries": 27,
-  "successful_queries": 26,
+  "total_queries": 29,
+  "successful_queries": 28,
   "failed_queries": 1,
-  "success_rate": 96.3,
+  "success_rate": 96.55,
   "sql_queries_count": 7,
-  "rag_queries_count": 6,
+  "rag_queries_count": 7,
   "hybrid_queries_count": 1,
   "queries": [
     {
@@ -338,6 +338,30 @@
       "completion_tokens": 722,
       "cost_usd": "0.000022",
       "response_time_ms": 11770,
+      "success": true,
+      "confidence_score": 0.9
+    },
+    {
+      "timestamp": "2025-10-07T14:25:54.915154",
+      "query_text": "what is crm",
+      "query_type": "unknown",
+      "tokens_used": 662,
+      "prompt_tokens": 6,
+      "completion_tokens": 656,
+      "cost_usd": "0.000020",
+      "response_time_ms": 6999,
+      "success": true,
+      "confidence_score": 0.5
+    },
+    {
+      "timestamp": "2025-10-07T14:26:43.607886",
+      "query_text": "how to add a lead, say it clearly no extra text.",
+      "query_type": "semantic_rag",
+      "tokens_used": 98,
+      "prompt_tokens": 22,
+      "completion_tokens": 76,
+      "cost_usd": "0.000002",
+      "response_time_ms": 8507,
       "success": true,
       "confidence_score": 0.9
     }
