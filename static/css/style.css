@@ -2087,3 +2087,450 @@ body::before {
 .password-strength.strong {
   color: #38a169;
 }
+
+/* Auth Container */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.auth-card {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  max-width: 450px;
+  width: 100%;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.auth-footer p {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #4a5568;
+}
+
+.auth-footer a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.auth-footer a:hover {
+  text-decoration: underline;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.error-message, .success-message {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  display: none;
+  font-size: 0.9rem;
+}
+
+.error-message {
+  background-color: #fed7d7;
+  color: #9b2c2c;
+  border: 1px solid #fc8181;
+}
+
+.success-message {
+  background-color: #c6f6d5;
+  color: #22543d;
+  border: 1px solid #68d391;
+}
+
+.btn-info {
+  background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  color: white;
+  border: 1px solid #3182ce;
+}
+
+.btn-info:hover {
+  background: linear-gradient(135deg, #2c5282 0%, #2a4365 100%);
+}
+
+.btn-admin {
+  background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+  color: white;
+  border: 1px solid #e53e3e;
+}
+
+.btn-admin:hover {
+  background: linear-gradient(135deg, #c53030 0%, #9c2626 100%);
+}
+
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.user-name {
+  color: #2d3748;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+}
+
+/* Role Badge Styles */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-right: 0.75rem;
+  border: 2px solid;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.role-badge.anonymous {
+  background: linear-gradient(135deg, rgba(160, 174, 192, 0.2) 0%, rgba(113, 128, 150, 0.2) 100%);
+  color: #2d3748;
+  border-color: rgba(160, 174, 192, 0.5);
+}
+
+.role-badge.student {
+  background: linear-gradient(135deg, rgba(49, 130, 206, 0.2) 0%, rgba(43, 108, 176, 0.2) 100%);
+  color: #1a365d;
+  border-color: rgba(49, 130, 206, 0.5);
+  animation: badgePulse 3s ease-in-out infinite;
+}
+
+.role-badge.admin {
+  background: linear-gradient(135deg, rgba(229, 62, 62, 0.2) 0%, rgba(197, 48, 48, 0.2) 100%);
+  color: #742a2a;
+  border-color: rgba(229, 62, 62, 0.5);
+  animation: badgePulse 3s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: scale(1.02);
+  }
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.stat-card {
+  background: #f7fafc;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
+}
+
+.stat-card h3 {
+  font-size: 0.9rem;
+  color: #4a5568;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #2d3748;
+}
+
+.modal .close {
+  position: absolute;
+  right: 1.5rem;
+  top: 1.5rem;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #a0aec0;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+.modal .close:hover {
+  color: #4a5568;
+}
+
+.chat-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.chat-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.chat-subtitle {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.chat-input-container {
+  padding: 1.5rem 2rem;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.input-wrapper {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+#user-input {
+  flex: 1;
+  padding: 1rem 1.5rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  resize: none;
+  font-family: inherit;
+}
+
+#user-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.input-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #4a5568;
+}
+
+.upload-box {
+  padding: 1rem;
+  border: 2px dashed #cbd5e0;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upload-box:hover {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.upload-label {
+  display: block;
+  cursor: pointer;
+  color: #4a5568;
+}
+
+.login-required {
+  text-align: center;
+  color: #a0aec0;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.recent-list {
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  text-align: center;
+  color: #a0aec0;
+  font-style: italic;
+  padding: 1rem;
+}
+
+.bot-message {
+  display: flex;
+  gap: 1rem;
+}
+
+.message-content {
+  flex: 1;
+  background: #f7fafc;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.message-content ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.message-content li {
+  margin: 0.25rem 0;
+}
+
+/* ============================================================================
+   User Role & Dashboard Context Styles
+   ============================================================================ */
+
+/* User Role Badge */
+.user-role-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 0.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.user-role-badge::before {
+  content: attr(data-role);
+}
+
+/* Role-specific colors */
+.user-role-badge[data-role="Admin"] {
+  background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+  border-color: #f56565;
+  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.3);
+}
+
+.user-role-badge[data-role="Staff"] {
+  background: linear-gradient(135deg, #d69e2e 0%, #b7791f 100%);
+  border-color: #ecc94b;
+  box-shadow: 0 2px 8px rgba(214, 158, 46, 0.3);
+}
+
+.user-role-badge[data-role="User"] {
+  background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  border-color: #63b3ed;
+  box-shadow: 0 2px 8px rgba(49, 130, 206, 0.3);
+}
+
+/* Dashboard Context Indicator */
+#dashboardContext {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 1rem;
+}
+
+.dashboard-context {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  border: 1px solid;
+  transition: all 0.3s ease;
+}
+
+.dashboard-context i {
+  font-size: 1rem;
+}
+
+.staff-context {
+  background: rgba(214, 158, 46, 0.2);
+  border-color: rgba(214, 158, 46, 0.4);
+  color: #744210;
+}
+
+.staff-context strong {
+  color: #7c2d12;
+}
+
+.user-context {
+  background: rgba(49, 130, 206, 0.2);
+  border-color: rgba(49, 130, 206, 0.4);
+  color: #1e3a8a;
+}
+
+.user-context strong {
+  color: #1e40af;
+}
+
+/* Auth Controls Flexbox */
+#authControls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Header Actions Improvements */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1024px) {
+  .dashboard-context span {
+    display: none;
+  }
+
+  .dashboard-context i {
+    font-size: 1.25rem;
+  }
+
+  #dashboardContext {
+    margin: 0 0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .user-role-badge {
+    display: none;
+  }
+
+  #dashboardContext {
+    display: none;
+  }
+}

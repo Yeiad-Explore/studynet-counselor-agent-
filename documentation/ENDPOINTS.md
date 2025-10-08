@@ -1,8 +1,10 @@
 # API Endpoints Documentation
 
-Complete documentation of all API endpoints with Postman test examples.
+Complete documentation of all API endpoints with JWT authentication and Postman test examples.
 
 **Base URL:** `http://localhost:8000/api`
+
+**Total Endpoints:** 32
 
 ---
 
@@ -10,15 +12,18 @@ Complete documentation of all API endpoints with Postman test examples.
 
 1. [Frontend Views](#frontend-views)
 2. [Health & Status](#health--status)
-3. [Query Processing](#query-processing)
-4. [Document Management](#document-management)
-5. [Memory Management](#memory-management)
-6. [System Monitoring](#system-monitoring)
-7. [Knowledge Base Management](#knowledge-base-management)
-8. [Analytics](#analytics)
-9. [Reports](#reports)
-10. [Data Export](#data-export)
-11. [Developer Dashboard](#developer-dashboard)
+3. [Authentication Pages](#authentication-pages)
+4. [Authentication Endpoints](#authentication-endpoints)
+5. [User Management](#user-management)
+6. [Query Processing](#query-processing)
+7. [Document Management](#document-management)
+8. [Memory Management](#memory-management)
+9. [System Monitoring](#system-monitoring)
+10. [Knowledge Base Management](#knowledge-base-management)
+11. [Analytics](#analytics)
+12. [Reports](#reports)
+13. [Data Export](#data-export)
+14. [Developer Dashboard](#developer-dashboard)
 
 ---
 
@@ -81,13 +86,436 @@ GET http://localhost:8000/api/health/
 
 ---
 
-## Query Processing
+## Authentication Pages
 
-### 4. Process Query
-**Endpoint:** `POST /api/query/`
-**Description:** Process a user query through RAG pipeline
+### 3. Login Page
+**Endpoint:** `GET /api/auth/login-page/`
+**Description:** Serves the login HTML page
+**Auth:** None
+
+**Postman Test:**
+```
+GET http://localhost:8000/api/auth/login-page/
+```
+
+**Expected Response:** HTML login page
+
+---
+
+### 4. Register Page
+**Endpoint:** `GET /api/auth/register-page/`
+**Description:** Serves the registration HTML page
+**Auth:** None
+
+**Postman Test:**
+```
+GET http://localhost:8000/api/auth/register-page/
+```
+
+**Expected Response:** HTML registration page
+
+---
+
+## Authentication Endpoints
+
+### 5. User Registration
+**Endpoint:** `POST /api/auth/register/`
+**Description:** Register a new user account
 **Auth:** None
 **Content-Type:** application/json
+
+**Request Body:**
+```json
+{
+  "username": "john_doe",
+  "email": "john@example.com",
+  "password": "SecurePass123!",
+  "password_confirm": "SecurePass123!",
+  "first_name": "John",
+  "last_name": "Doe"
+}
+```
+
+**Postman Test:**
+```
+POST http://localhost:8000/api/auth/register/
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "email": "test@example.com",
+  "password": "TestPass123!",
+  "password_confirm": "TestPass123!",
+  "first_name": "Test",
+  "last_name": "User"
+}
+```
+
+**Expected Response:**
+```json
+{
+  "message": "User registered successfully",
+  "access": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+  "refresh": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+  "user": {
+    "id": 1,
+    "username": "testuser",
+    "email": "test@example.com",
+    "first_name": "Test",
+    "last_name": "User",
+    "is_admin": false
+  }
+}
+```
+
+---
+
+### 6. User Login
+**Endpoint:** `POST /api/auth/login/`
+**Description:** Login user and return JWT tokens
+**Auth:** None
+**Content-Type:** application/json
+
+**Request Body:**
+```json
+{
+  "username": "john_doe",
+  "password": "SecurePass123!"
+}
+```
+
+**Postman Test:**
+```
+POST http://localhost:8000/api/auth/login/
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "TestPass123!"
+}
+```
+
+**Expected Response:**
+```json
+{
+  "message": "Login successful",
+  "access": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+  "refresh": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+  "user": {
+    "id": 1,
+    "username": "testuser",
+    "email": "test@example.com",
+    "first_name": "Test",
+    "last_name": "User"
+  }
+}
+```
+
+---
+
+### 7. Token Refresh
+**Endpoint:** `POST /api/auth/token/refresh/`
+**Description:** Refresh access token using refresh token
+**Auth:** None
+**Content-Type:** application/json
+
+**Request Body:**
+```json
+{
+  "refresh": "eyJ0eXAiOiJKV1QiLCJhbGc..."
+}
+```
+
+**Postman Test:**
+```
+POST http://localhost:8000/api/auth/token/refresh/
+Content-Type: application/json
+
+{
+  "refresh": "eyJ0eXAiOiJKV1QiLCJhbGc..."
+}
+```
+
+**Expected Response:**
+```json
+{
+  "access": "eyJ0eXAiOiJKV1QiLCJhbGc..."
+}
+```
+
+---
+
+### 8. User Logout
+**Endpoint:** `POST /api/auth/logout/`
+**Description:** Logout user by blacklisting refresh token
+**Auth:** Required (Bearer Token)
+**Content-Type:** application/json
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Request Body:**
+```json
+{
+  "refresh": "eyJ0eXAiOiJKV1QiLCJhbGc..."
+}
+```
+
+**Postman Test:**
+```
+POST http://localhost:8000/api/auth/logout/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+Content-Type: application/json
+
+{
+  "refresh": "eyJ0eXAiOiJKV1QiLCJhbGc..."
+}
+```
+
+**Expected Response:**
+```json
+{
+  "message": "Logout successful"
+}
+```
+
+---
+
+### 9. Get User Profile
+**Endpoint:** `GET /api/auth/profile/`
+**Description:** Get current user profile
+**Auth:** Required (Bearer Token)
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Postman Test:**
+```
+GET http://localhost:8000/api/auth/profile/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+```
+
+**Expected Response:**
+```json
+{
+  "id": 1,
+  "username": "testuser",
+  "email": "test@example.com",
+  "first_name": "Test",
+  "last_name": "User",
+  "is_active": true,
+  "is_admin": false,
+  "date_joined": "2025-10-08T10:30:00Z",
+  "last_login": "2025-10-08T12:30:00Z"
+}
+```
+
+---
+
+### 10. Update User Profile
+**Endpoint:** `PUT/PATCH /api/auth/profile/update/`
+**Description:** Update current user profile
+**Auth:** Required (Bearer Token)
+**Content-Type:** application/json
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Request Body (all fields optional):**
+```json
+{
+  "email": "newemail@example.com",
+  "first_name": "Johnny",
+  "last_name": "Doe"
+}
+```
+
+**Postman Test:**
+```
+PUT http://localhost:8000/api/auth/profile/update/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+Content-Type: application/json
+
+{
+  "email": "newemail@example.com",
+  "first_name": "Johnny"
+}
+```
+
+**Expected Response:**
+```json
+{
+  "message": "Profile updated successfully",
+  "user": {
+    "id": 1,
+    "username": "testuser",
+    "email": "newemail@example.com",
+    "first_name": "Johnny",
+    "last_name": "User"
+  }
+}
+```
+
+---
+
+### 11. Change Password
+**Endpoint:** `POST /api/auth/password/change/`
+**Description:** Change user password
+**Auth:** Required (Bearer Token)
+**Content-Type:** application/json
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Request Body:**
+```json
+{
+  "old_password": "OldPass123!",
+  "new_password": "NewPass456!",
+  "new_password_confirm": "NewPass456!"
+}
+```
+
+**Postman Test:**
+```
+POST http://localhost:8000/api/auth/password/change/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+Content-Type: application/json
+
+{
+  "old_password": "TestPass123!",
+  "new_password": "NewTestPass456!",
+  "new_password_confirm": "NewTestPass456!"
+}
+```
+
+**Expected Response:**
+```json
+{
+  "message": "Password changed successfully"
+}
+```
+
+---
+
+## User Management
+
+### 12. User Statistics
+**Endpoint:** `GET /api/users/me/stats/`
+**Description:** Get user statistics (students can only view their own stats)
+**Auth:** Required (Bearer Token)
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Postman Test:**
+```
+GET http://localhost:8000/api/users/me/stats/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+```
+
+**Expected Response:**
+```json
+{
+  "user": {
+    "id": 1,
+    "username": "testuser",
+    "full_name": "Test User"
+  },
+  "statistics": {
+    "total_queries": 25,
+    "total_tokens": 12500,
+    "total_cost_usd": 0.625,
+    "avg_response_time_ms": 850.5,
+    "avg_confidence_score": 0.87,
+    "query_types": {
+      "sql": 10,
+      "rag": 12,
+      "hybrid": 3
+    },
+    "sessions_count": 5,
+    "csv_uploads": 2,
+    "document_uploads": 3
+  }
+}
+```
+
+---
+
+## Query Processing
+
+### 13. Anonymous Chat
+**Endpoint:** `POST /api/chat/`
+**Description:** Dedicated endpoint for anonymous users to chat without authentication
+**Auth:** None (Anonymous access only)
+**Content-Type:** application/json
+
+**Request Body:**
+```json
+{
+  "query": "What is the student visa process?",
+  "session_id": "anonymous_session_123"
+}
+```
+
+**Parameters:**
+- `query` (string, required): User's question
+- `session_id` (string, optional): Session identifier for conversation context
+
+**Postman Test:**
+```
+POST http://localhost:8000/api/chat/
+Content-Type: application/json
+
+{
+  "query": "List top 5 universities in Australia",
+  "session_id": "anonymous_test_session"
+}
+```
+
+**Expected Response:**
+```json
+{
+  "answer": "Here are the top 5 universities in Australia...",
+  "sources": [
+    {
+      "source": "document.pdf",
+      "score": 0.85
+    }
+  ],
+  "confidence_score": 0.9,
+  "web_search_used": false,
+  "session_id": "anonymous_test_session",
+  "query_type": "semantic_rag",
+  "user_type": "anonymous",
+  "message": "This is a free anonymous chat. For full features, please register an account."
+}
+```
+
+**Note:** This endpoint is specifically designed for anonymous users. It provides basic chat functionality without requiring authentication.
+
+---
+
+### 14. Process Query (Authenticated)
+**Endpoint:** `POST /api/query/`
+**Description:** Process a user query through RAG pipeline (for authenticated users)
+**Auth:** Required (Bearer Token)
+**Content-Type:** application/json
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
 
 **Request Body:**
 ```json
@@ -143,11 +571,16 @@ Content-Type: application/json
 
 ## Document Management
 
-### 5. Upload Document
+### 14. Upload Document
 **Endpoint:** `POST /api/upload/document/`
 **Description:** Upload and process PDF, DOCX, TXT, or HTML files
-**Auth:** None
+**Auth:** Required (Bearer Token)
 **Content-Type:** multipart/form-data
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
 
 **Form Data:**
 - `file` (file, required): Document file to upload
@@ -155,6 +588,7 @@ Content-Type: application/json
 **Postman Test:**
 ```
 POST http://localhost:8000/api/upload/document/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 Content-Type: multipart/form-data
 
 Body:
@@ -174,11 +608,16 @@ Body:
 
 ---
 
-### 6. Upload Text
+### 15. Upload Text
 **Endpoint:** `POST /api/upload/text/`
 **Description:** Upload raw text content
-**Auth:** None
+**Auth:** Required (Bearer Token)
 **Content-Type:** application/json
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
 
 **Request Body:**
 ```json
@@ -200,6 +639,7 @@ Body:
 **Postman Test:**
 ```
 POST http://localhost:8000/api/upload/text/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 Content-Type: application/json
 
 {
@@ -223,11 +663,16 @@ Content-Type: application/json
 
 ---
 
-### 7. Upload CSV
+### 16. Upload CSV
 **Endpoint:** `POST /api/upload/csv/`
 **Description:** Upload CSV file for SQL queries
-**Auth:** None
+**Auth:** Required (Bearer Token)
 **Content-Type:** multipart/form-data
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
 
 **Form Data:**
 - `file` (file, required): CSV file to upload
@@ -235,6 +680,7 @@ Content-Type: application/json
 **Postman Test:**
 ```
 POST http://localhost:8000/api/upload/csv/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 Content-Type: multipart/form-data
 
 Body:
@@ -264,14 +710,20 @@ Body:
 
 ## Memory Management
 
-### 8. Get Session Memory
+### 17. Get Session Memory
 **Endpoint:** `GET /api/memory/<session_id>/`
 **Description:** Retrieve conversation memory for a specific session
-**Auth:** None
+**Auth:** Required (Bearer Token)
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
 
 **Postman Test:**
 ```
 GET http://localhost:8000/api/memory/postman_test_session/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 ```
 
 **Expected Response:**
@@ -286,14 +738,20 @@ GET http://localhost:8000/api/memory/postman_test_session/
 
 ---
 
-### 9. Clear Session Memory
+### 18. Clear Session Memory
 **Endpoint:** `DELETE /api/memory/<session_id>/`
 **Description:** Clear conversation memory for a specific session
-**Auth:** None
+**Auth:** Required (Bearer Token)
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
 
 **Postman Test:**
 ```
 DELETE http://localhost:8000/api/memory/postman_test_session/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 ```
 
 **Expected Response:**
@@ -306,10 +764,10 @@ DELETE http://localhost:8000/api/memory/postman_test_session/
 
 ---
 
-### 10. List All Sessions
+### 19. List All Sessions
 **Endpoint:** `GET /api/sessions/`
 **Description:** List all active sessions
-**Auth:** None
+**Auth:** None (Anonymous access allowed)
 
 **Postman Test:**
 ```
@@ -332,14 +790,20 @@ GET http://localhost:8000/api/sessions/
 
 ## System Monitoring
 
-### 11. Get System Metrics
+### 20. Get System Metrics
 **Endpoint:** `GET /api/metrics/`
 **Description:** Retrieve system performance metrics
-**Auth:** None
+**Auth:** Required (Bearer Token)
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
 
 **Postman Test:**
 ```
 GET http://localhost:8000/api/metrics/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 ```
 
 **Expected Response:**
@@ -358,14 +822,20 @@ GET http://localhost:8000/api/metrics/
 
 ---
 
-### 12. Reset System Metrics
+### 21. Reset System Metrics
 **Endpoint:** `POST /api/metrics/`
 **Description:** Reset system metrics to zero
-**Auth:** None
+**Auth:** Required (Bearer Token)
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
 
 **Postman Test:**
 ```
 POST http://localhost:8000/api/metrics/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 ```
 
 **Expected Response:**
@@ -380,14 +850,20 @@ POST http://localhost:8000/api/metrics/
 
 ## Knowledge Base Management
 
-### 13. Knowledge Base Status
+### 22. Knowledge Base Status
 **Endpoint:** `GET /api/knowledge-base/status/`
 **Description:** Get knowledge base statistics
-**Auth:** None
+**Auth:** Required (Bearer Token)
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
 
 **Postman Test:**
 ```
 GET http://localhost:8000/api/knowledge-base/status/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 ```
 
 **Expected Response:**
@@ -404,14 +880,20 @@ GET http://localhost:8000/api/knowledge-base/status/
 
 ---
 
-### 14. Reload Knowledge Base
+### 23. Reload Knowledge Base
 **Endpoint:** `POST /api/knowledge-base/reload/`
 **Description:** Reload knowledge base from PDFs folder
-**Auth:** None
+**Auth:** Required (Bearer Token)
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
 
 **Postman Test:**
 ```
 POST http://localhost:8000/api/knowledge-base/reload/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 ```
 
 **Expected Response:**
@@ -428,14 +910,20 @@ POST http://localhost:8000/api/knowledge-base/reload/
 
 ---
 
-### 15. Clear Vector Store
+### 24. Clear Vector Store
 **Endpoint:** `DELETE /api/vectorstore/clear/`
 **Description:** Clear entire vector store (use with caution!)
-**Auth:** None
+**Auth:** Required (Bearer Token)
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
 
 **Postman Test:**
 ```
 DELETE http://localhost:8000/api/vectorstore/clear/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 ```
 
 **Expected Response:**
@@ -452,10 +940,15 @@ DELETE http://localhost:8000/api/vectorstore/clear/
 
 ## Analytics
 
-### 16. Query Analytics
+### 25. Query Analytics
 **Endpoint:** `GET /api/analytics/queries/`
 **Description:** Get query analytics and statistics
-**Auth:** None
+**Auth:** Required (Bearer Token)
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
 
 **Query Parameters:**
 - `days` (integer, optional): Number of days to analyze, default: 7
@@ -463,6 +956,7 @@ DELETE http://localhost:8000/api/vectorstore/clear/
 **Postman Test:**
 ```
 GET http://localhost:8000/api/analytics/queries/?days=30
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 ```
 
 **Expected Response:**
@@ -490,14 +984,20 @@ GET http://localhost:8000/api/analytics/queries/?days=30
 
 ---
 
-### 17. Data Source Statistics
+### 26. Data Source Statistics
 **Endpoint:** `GET /api/analytics/sources/`
 **Description:** Get statistics for all data sources
-**Auth:** None
+**Auth:** Required (Bearer Token)
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
 
 **Postman Test:**
 ```
 GET http://localhost:8000/api/analytics/sources/
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 ```
 
 **Expected Response:**
@@ -532,10 +1032,15 @@ GET http://localhost:8000/api/analytics/sources/
 
 ## Reports
 
-### 18. System Report
+### 27. System Report
 **Endpoint:** `GET /api/reports/system/`
 **Description:** Generate comprehensive system health report
-**Auth:** None
+**Auth:** Required (Bearer Token)
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
 
 **Postman Test:**
 ```

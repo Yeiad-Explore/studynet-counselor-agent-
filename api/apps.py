@@ -12,5 +12,5 @@ class ApiConfig(AppConfig):
         """
         Run initialization when Django starts
         """
-        # Register signals, etc. here if needed
-        pass
+        # Import UserProfile to register signals
+        import api.user_profile

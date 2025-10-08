@@ -3,6 +3,7 @@ from django.db import models
 from django.utils import timezone
 from django.db.models import JSONField
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth.models import User
 
 
 class ChatMessage(models.Model):
@@ -36,13 +37,14 @@ class ChatMessage(models.Model):
 class ConversationSession(models.Model):
     """Conversation session with memory context"""
     session_id = models.CharField(max_length=255, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='sessions')
     total_tokens = models.IntegerField(default=0)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         ordering = ['-updated_at']
-    
+
     def __str__(self):
         return f"Session {self.session_id}"
 
@@ -51,10 +53,11 @@ class QueryRequest(models.Model):
     """Request model for query processing"""
     query = models.TextField()
     session_id = models.CharField(max_length=255, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='queries')
     use_web_search = models.BooleanField(default=True)
     enhance_formatting = models.BooleanField(default=True)
     created_at = models.DateTimeField(default=timezone.now)
-    
+
     def __str__(self):
         return f"Query: {self.query[:50]}..."
 
@@ -84,9 +87,10 @@ class QueryResponse(models.Model):
 class DocumentUpload(models.Model):
     """Model for text document upload"""
     content = models.TextField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='documents')
     metadata = JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
-    
+
     def __str__(self):
         return f"Document: {self.content[:50]}..."
 
@@ -136,6 +140,7 @@ class QueryAnalytics(models.Model):
         UNKNOWN = 'unknown', 'Unknown'
 
     session_id = models.CharField(max_length=255, db_index=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='analytics')
     query_text = models.TextField()
     query_type = models.CharField(
         max_length=20,
@@ -230,7 +235,8 @@ class CSVUpload(models.Model):
     column_count = models.IntegerField(default=0)
     columns = JSONField(default=list, blank=True)
 
-    uploaded_by = models.CharField(max_length=255, blank=True, null=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='csv_uploads')
+    uploaded_by = models.CharField(max_length=255, blank=True, null=True)  # Legacy field
     uploaded_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -243,6 +249,7 @@ class CSVUpload(models.Model):
 class AgentInteraction(models.Model):
     """Track agent interactions and tool usage"""
     session_id = models.CharField(max_length=255, db_index=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='interactions')
     query = models.TextField()
 
     # Agent response

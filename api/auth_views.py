@@ -1,7 +1,7 @@
 # Authentication views for JWT-based authentication
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
@@ -9,6 +9,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.shortcuts import render
 import logging
 
 logger = logging.getLogger(__name__)
@@ -69,7 +70,7 @@ def register_view(request):
         username = request.data.get('username')
         email = request.data.get('email')
         password = request.data.get('password')
-        password_confirm = request.data.get('password_confirm')
+        password_confirm = request.data.get('password2') or request.data.get('password_confirm')
         first_name = request.data.get('first_name', '')
         last_name = request.data.get('last_name', '')
 
@@ -121,18 +122,26 @@ def register_view(request):
         # Generate tokens
         tokens = get_tokens_for_user(user)
 
+        # Store bearer token in user profile
+        from .user_profile import UserProfile
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        profile.bearer_token = tokens['access']
+        profile.save()
+
         logger.info(f"New user registered: {username}")
 
         return Response({
             "message": "User registered successfully",
+            "access": tokens['access'],
+            "refresh": tokens['refresh'],
             "user": {
                 "id": user.id,
                 "username": user.username,
                 "email": user.email,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
-            },
-            "tokens": tokens
+                "is_admin": user.is_superuser,
+            }
         }, status=status.HTTP_201_CREATED)
 
     except Exception as e:
@@ -187,18 +196,25 @@ def login_view(request):
         # Generate tokens
         tokens = get_tokens_for_user(user)
 
+        # Store/Update bearer token in user profile
+        from .user_profile import UserProfile
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        profile.bearer_token = tokens['access']
+        profile.save()
+
         logger.info(f"User logged in: {username}")
 
         return Response({
             "message": "Login successful",
+            "access": tokens['access'],
+            "refresh": tokens['refresh'],
             "user": {
                 "id": user.id,
                 "username": user.username,
                 "email": user.email,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
-            },
-            "tokens": tokens
+            }
         }, status=status.HTTP_200_OK)
 
     except Exception as e:
@@ -319,7 +335,7 @@ def user_profile_view(request):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "is_active": user.is_active,
-            "is_staff": user.is_staff,
+            "is_admin": user.is_superuser,
             "date_joined": user.date_joined,
             "last_login": user.last_login,
         }, status=status.HTTP_200_OK)
@@ -389,6 +405,101 @@ def update_profile_view(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
+
+# ============================================================================
+# User Statistics (Students Only)
+# ============================================================================
+
+@api_view(['GET'])
+def user_stats_view(request):
+    """Get user statistics - students can only view their own stats
+
+    Returns:
+        200: User statistics
+        403: Permission denied
+    """
+    try:
+        # Students can only view their own stats
+        target_user = request.user
+
+        from api.models import QueryAnalytics, ConversationSession, CSVUpload, DocumentUpload
+        from django.db.models import Sum, Avg, Count
+
+        # Get analytics
+        analytics = QueryAnalytics.objects.filter(user=target_user)
+
+        # Aggregate stats
+        stats = analytics.aggregate(
+            total_queries=Count('id'),
+            total_tokens=Sum('tokens_used'),
+            total_cost=Sum('total_cost_usd'),
+            avg_response_time=Avg('response_time_ms'),
+            avg_confidence=Avg('confidence_score'),
+        )
+
+        # Query type breakdown
+        query_types = {
+            'sql': analytics.filter(query_type='structured_sql').count(),
+            'rag': analytics.filter(query_type='semantic_rag').count(),
+            'hybrid': analytics.filter(query_type='hybrid').count(),
+        }
+
+        # Sessions
+        sessions_count = ConversationSession.objects.filter(user=target_user).count()
+
+        # Uploads
+        csv_uploads = CSVUpload.objects.filter(user=target_user).count()
+        doc_uploads = DocumentUpload.objects.filter(user=target_user).count()
+
+        return Response({
+            "user": {
+                "id": target_user.id,
+                "username": target_user.username,
+                "full_name": f"{target_user.first_name} {target_user.last_name}".strip() or target_user.username
+            },
+            "statistics": {
+                "total_queries": stats['total_queries'] or 0,
+                "total_tokens": stats['total_tokens'] or 0,
+                "total_cost_usd": float(stats['total_cost'] or 0),
+                "avg_response_time_ms": round(stats['avg_response_time'] or 0, 2),
+                "avg_confidence_score": round(stats['avg_confidence'] or 0, 2),
+                "query_types": query_types,
+                "sessions_count": sessions_count,
+                "csv_uploads": csv_uploads,
+                "document_uploads": doc_uploads,
+            }
+        }, status=status.HTTP_200_OK)
+
+    except User.DoesNotExist:
+        return Response(
+            {"error": "User not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        logger.error(f"User stats error: {e}")
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+# ============================================================================
+# HTML Page Views
+# ============================================================================
+
+def login_page_view(request):
+    """Render the login page"""
+    return render(request, 'login.html')
+
+
+def register_page_view(request):
+    """Render the registration page"""
+    return render(request, 'register.html')
+
+
+# ============================================================================
+# Password Management
+# ============================================================================
 
 @api_view(['POST'])
 def change_password_view(request):

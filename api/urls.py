@@ -13,6 +13,10 @@ urlpatterns = [
     # Health check
     path('health/', views.HealthCheckView.as_view(), name='health_check'),
 
+    # Authentication pages
+    path('auth/login-page/', auth_views.login_page_view, name='login_page'),
+    path('auth/register-page/', auth_views.register_page_view, name='register_page'),
+
     # Authentication endpoints
     path('auth/register/', auth_views.register_view, name='register'),
     path('auth/login/', auth_views.login_view, name='login'),
@@ -22,7 +26,11 @@ urlpatterns = [
     path('auth/profile/update/', auth_views.update_profile_view, name='update_profile'),
     path('auth/password/change/', auth_views.change_password_view, name='change_password'),
 
+    # User stats endpoint (students can view their own stats)
+    path('users/me/stats/', auth_views.user_stats_view, name='my_stats'),
+
     # Core query processing
+    path('chat/', views.AnonymousChatView.as_view(), name='anonymous_chat'),
     path('query/', views.QueryProcessView.as_view(), name='query_process'),
 
     # Document management

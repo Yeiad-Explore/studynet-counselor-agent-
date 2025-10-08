@@ -1,6 +1,6 @@
 # RAG AI Agent - Complete Developer Documentation
 
-**Production-ready Django RAG backend with 23 REST API endpoints, optimized dependencies, and comprehensive documentation.**
+**Production-ready Django RAG backend with 32 REST API endpoints, JWT authentication, anonymous chat, and comprehensive documentation.**
 
 ## 📋 Table of Contents
 1. [Project Overview](#project-overview)
@@ -22,8 +22,10 @@
 ## 📄 Complete Documentation Suite
 
 - **[README.md](README.md)** - This file (Getting started & overview)
-- **[ENDPOINTS.md](ENDPOINTS.md)** - All 23 API endpoints with Postman tests
+- **[ENDPOINTS.md](ENDPOINTS.md)** - All 32 API endpoints with Postman tests
 - **[FRONTEND_INTEGRATION_GUIDE.md](FRONTEND_INTEGRATION_GUIDE.md)** - React/Vue/Angular integration
+- **[FRONTEND_INTEGRATION_GUIDELINE.md](FRONTEND_INTEGRATION_GUIDELINE.md)** - JWT authentication flow guide
+- **[ANONYMOUS_CHAT_ENDPOINT.md](ANONYMOUS_CHAT_ENDPOINT.md)** - Anonymous chat implementation
 - **[DEPENDENCIES_ANALYSIS.md](DEPENDENCIES_ANALYSIS.md)** - Optimization guide
 
 ---
@@ -31,18 +33,23 @@
 ## 🎯 Project Overview
 
 This is a **RAG (Retrieval-Augmented Generation) AI Agent** built with Django REST Framework. It allows users to:
+- **Anonymous Chat**: Try the system without registration
+- **Authenticated Access**: Full features with JWT authentication
 - Ask questions about documents (PDFs)
 - Get AI-powered answers using Azure OpenAI
 - Upload and process new documents
 - Search the web for additional information
 - Maintain conversation history
+- Role-based access control (Anonymous, Student, Admin)
 
 ### Key Technologies
 - **Backend**: Django + Django REST Framework
+- **Authentication**: JWT (JSON Web Tokens) with Bearer tokens
 - **AI**: Azure OpenAI (GPT-4) + Embeddings
 - **Vector Database**: Chroma
 - **Frontend**: HTML, CSS, JavaScript (Vanilla)
 - **Document Processing**: PyPDF2, LangChain
+- **User Management**: Django User model with custom profiles
 
 ---
 
@@ -63,14 +70,23 @@ This is a **RAG (Retrieval-Augmented Generation) AI Agent** built with Django RE
 ```
 
 ### Complete Workflow
-1. **User Input**: User types a question in the frontend
-2. **API Request**: Frontend sends POST request to `/api/query/`
-3. **Query Processing**: Django processes the request
+
+#### Anonymous User Flow
+1. **Anonymous Access**: User visits site and can chat immediately via `/api/chat/`
+2. **No Authentication**: No login required for basic chat functionality
+3. **Full AI Processing**: Same RAG capabilities as authenticated users
+4. **Registration Prompt**: Encourages users to register for full features
+
+#### Authenticated User Flow
+1. **User Registration/Login**: JWT token generation and storage
+2. **API Request**: Frontend sends authenticated requests to `/api/query/`
+3. **Query Processing**: Django processes with user context
 4. **Document Retrieval**: System searches vector store for relevant documents
 5. **AI Processing**: Query + documents sent to Azure OpenAI
 6. **Response Generation**: AI generates answer with sources
-7. **Response Return**: Answer sent back to frontend
-8. **Display**: Frontend shows answer with sources and metadata
+7. **Analytics Tracking**: User-specific metrics and usage tracking
+8. **Response Return**: Answer sent back to frontend
+9. **Display**: Frontend shows answer with sources and metadata
 
 ---
 
@@ -98,8 +114,10 @@ Studynet-AI-Agent/
 ├── api/                          # Main API application
 │   ├── views.py                  # API endpoints (1200+ lines)
 │   ├── models.py                 # Database models
-│   ├── urls.py                   # API URL routing
+│   ├── urls.py                   # API URL routing (32 endpoints)
 │   ├── serializers.py            # Data serialization
+│   ├── auth_views.py             # JWT authentication views
+│   ├── user_profile.py           # User profile with bearer tokens
 │   ├── agent.py                  # RAG agent orchestration
 │   ├── retriever.py              # Hybrid retrieval (Vector + BM25)
 │   ├── vectorstore.py            # ChromaDB operations
@@ -114,12 +132,14 @@ Studynet-AI-Agent/
 │   ├── utils.py                  # Document processing utilities
 │   ├── config.py                 # Configuration loader
 │   ├── initialization.py         # Startup initialization
-│   ├── admin.py                  # Django admin
+│   ├── admin.py                  # Django admin (customized)
 │   ├── apps.py                   # App configuration
 │   ├── tests.py                  # Unit tests
 │   ├── migrations/               # Database migrations
 │   └── templates/                # HTML templates
 │       ├── index.html            # Main chat interface
+│       ├── login.html            # Login page
+│       ├── register.html         # Registration page
 │       └── developer_dashboard.html  # Developer dashboard
 │
 ├── static/                       # Frontend static files
@@ -277,46 +297,79 @@ http://localhost:8000/api
 
 ### Quick Reference
 
-| Category | Endpoint | Method | Purpose |
-|----------|----------|--------|---------|
-| **Core** | `/health/` | GET | Health check |
-| **Core** | `/query/` | POST | Process user questions |
-| **Upload** | `/upload/document/` | POST | Upload PDF/DOCX |
-| **Upload** | `/upload/text/` | POST | Upload raw text |
-| **Upload** | `/upload/csv/` | POST | Upload CSV files |
-| **Memory** | `/memory/{session_id}/` | GET/DELETE | Session memory |
-| **Memory** | `/sessions/` | GET | List all sessions |
-| **System** | `/metrics/` | GET/POST | System metrics |
-| **KB** | `/knowledge-base/status/` | GET | KB statistics |
-| **KB** | `/knowledge-base/reload/` | POST | Reload KB |
-| **KB** | `/vectorstore/clear/` | DELETE | Clear vector store |
-| **Analytics** | `/analytics/queries/` | GET | Query analytics |
-| **Analytics** | `/analytics/sources/` | GET | Data source stats |
-| **Reports** | `/reports/system/` | GET | System health report |
-| **Reports** | `/reports/usage/` | GET | Usage statistics |
-| **Dashboard** | `/dashboard/` | GET | Main dashboard |
-| **Dashboard** | `/dashboard/tokens/` | GET | Token usage |
-| **Dashboard** | `/dashboard/costs/` | GET | Cost breakdown |
+| Category | Endpoint | Method | Auth | Purpose |
+|----------|----------|--------|------|---------|
+| **Anonymous** | `/chat/` | POST | None | Anonymous chat (no auth required) |
+| **Auth** | `/auth/register/` | POST | None | User registration |
+| **Auth** | `/auth/login/` | POST | None | User login |
+| **Auth** | `/auth/logout/` | POST | Required | User logout |
+| **Auth** | `/auth/token/refresh/` | POST | None | Refresh JWT token |
+| **Core** | `/query/` | POST | Required | Process user questions (authenticated) |
+| **Core** | `/health/` | GET | None | Health check |
+| **Upload** | `/upload/document/` | POST | Required | Upload PDF/DOCX |
+| **Upload** | `/upload/text/` | POST | Required | Upload raw text |
+| **Upload** | `/upload/csv/` | POST | Required | Upload CSV files |
+| **Memory** | `/memory/{session_id}/` | GET/DELETE | Required | Session memory |
+| **Memory** | `/sessions/` | GET | None | List all sessions |
+| **System** | `/metrics/` | GET/POST | Required | System metrics |
+| **KB** | `/knowledge-base/status/` | GET | Required | KB statistics |
+| **KB** | `/knowledge-base/reload/` | POST | Required | Reload KB |
+| **KB** | `/vectorstore/clear/` | DELETE | Required | Clear vector store |
+| **Analytics** | `/analytics/queries/` | GET | Required | Query analytics |
+| **Analytics** | `/analytics/sources/` | GET | Required | Data source stats |
+| **Reports** | `/reports/system/` | GET | Required | System health report |
+| **Dashboard** | `/dashboard/` | GET | Required | Main dashboard |
+| **Dashboard** | `/dashboard/tokens/` | GET | Required | Token usage |
+| **Dashboard** | `/dashboard/costs/` | GET | Required | Cost breakdown |
 
-### Example: Query Processing
+### Example: Anonymous Chat (No Authentication Required)
 
 **Request:**
 ```bash
-curl -X POST http://localhost:8000/api/query/ \
+curl -X POST http://localhost:8000/api/chat/ \
   -H "Content-Type: application/json" \
   -d '{
     "query": "What universities are in Sydney?",
-    "session_id": "test_session",
-    "use_web_search": false,
-    "enhance_formatting": true
+    "session_id": "anonymous_session"
   }'
 ```
 
 **Response:**
 ```json
 {
-  "response": "Based on the documents, universities in Sydney include...",
-  "session_id": "test_session",
+  "answer": "Based on the documents, universities in Sydney include...",
+  "session_id": "anonymous_session",
+  "query_type": "semantic_rag",
+  "confidence_score": 0.92,
+  "sources": [
+    {
+      "source": "universities.pdf",
+      "score": 0.85
+    }
+  ],
+  "user_type": "anonymous",
+  "message": "This is a free anonymous chat. For full features, please register an account."
+}
+```
+
+### Example: Authenticated Query Processing
+
+**Request:**
+```bash
+curl -X POST http://localhost:8000/api/query/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your_jwt_token_here" \
+  -d '{
+    "query": "What universities are in Sydney?",
+    "session_id": "authenticated_session"
+  }'
+```
+
+**Response:**
+```json
+{
+  "answer": "Based on the documents, universities in Sydney include...",
+  "session_id": "authenticated_session",
   "query_type": "semantic_rag",
   "confidence_score": 0.92,
   "sources": [
@@ -334,8 +387,10 @@ curl -X POST http://localhost:8000/api/query/ \
 ```
 
 **📚 Full Documentation:**
-- Complete endpoint list: [ENDPOINTS.md](ENDPOINTS.md)
+- Complete endpoint list: [ENDPOINTS.md](ENDPOINTS.md) (32 endpoints)
 - Frontend integration: [FRONTEND_INTEGRATION_GUIDE.md](FRONTEND_INTEGRATION_GUIDE.md)
+- JWT authentication flow: [FRONTEND_INTEGRATION_GUIDELINE.md](FRONTEND_INTEGRATION_GUIDELINE.md)
+- Anonymous chat: [ANONYMOUS_CHAT_ENDPOINT.md](ANONYMOUS_CHAT_ENDPOINT.md)
 - Dependencies guide: [DEPENDENCIES_ANALYSIS.md](DEPENDENCIES_ANALYSIS.md)
 
 ---
@@ -934,8 +989,11 @@ pip list | grep -E "docling|sentence"   # Check installed packages
 
 This RAG AI Agent is a **production-ready**, **fully-documented** system with:
 
-✅ **23 REST API Endpoints** - Complete backend functionality
-✅ **Comprehensive Documentation** - 4 detailed guides covering everything
+✅ **32 REST API Endpoints** - Complete backend functionality with JWT authentication
+✅ **Anonymous Chat** - Try before registering with `/api/chat/` endpoint
+✅ **JWT Authentication** - Secure Bearer token system with role-based access
+✅ **User Management** - Registration, login, profile management, analytics
+✅ **Comprehensive Documentation** - 6 detailed guides covering everything
 ✅ **Flexible Installation** - Choose from Minimal (500MB) to Full (3-4GB)
 ✅ **Frontend Ready** - Integration guides for React, Vue, Angular, TypeScript
 ✅ **Optimized Dependencies** - Automatic fallbacks, no unnecessary packages
@@ -948,17 +1006,21 @@ This RAG AI Agent is a **production-ready**, **fully-documented** system with:
 - [ ] Run migrations: `python manage.py migrate`
 - [ ] Load PDFs: Put files in `./pdfs/` and run `python load_kb.py`
 - [ ] Start server: `python manage.py runserver`
-- [ ] Test API: Visit `http://localhost:8000/api/health/`
+- [ ] Test anonymous chat: `curl -X POST http://localhost:8000/api/chat/ -H "Content-Type: application/json" -d '{"query": "Hello"}'`
+- [ ] Test API health: Visit `http://localhost:8000/api/health/`
 - [ ] Read docs: Check [ENDPOINTS.md](ENDPOINTS.md) for API reference
+- [ ] Test authentication: Register user and test JWT flow
 
 ### 📖 Next Steps
 
-- **Backend Developers**: See [ENDPOINTS.md](ENDPOINTS.md)
+- **Backend Developers**: See [ENDPOINTS.md](ENDPOINTS.md) (32 endpoints)
 - **Frontend Developers**: See [FRONTEND_INTEGRATION_GUIDE.md](FRONTEND_INTEGRATION_GUIDE.md)
+- **JWT Authentication**: See [FRONTEND_INTEGRATION_GUIDELINE.md](FRONTEND_INTEGRATION_GUIDELINE.md)
+- **Anonymous Chat**: See [ANONYMOUS_CHAT_ENDPOINT.md](ANONYMOUS_CHAT_ENDPOINT.md)
 - **DevOps/Deployment**: See [DEPENDENCIES_ANALYSIS.md](DEPENDENCIES_ANALYSIS.md)
 
 ---
 
-**Built with ❤️ using Django, LangChain, and Azure OpenAI**
+**Built with ❤️ using Django, LangChain, Azure OpenAI, and JWT Authentication**
 
 Happy coding! 🚀
